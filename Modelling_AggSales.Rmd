@@ -14,8 +14,6 @@ Following is a step-by-step analysis for Frozen Juice category, including data c
 
 *A detailed description of the functions we created by ourselves is listed in another document - Func_AggSales.md     
 
-Contributors: Kevin Li, Fu-Chi Shih, Xueqi Wang, Prof. Candance Yano
-
 ```{r, echo=FALSE}
 options(scipen = 999)
 ```

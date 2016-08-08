@@ -9,8 +9,6 @@ Following is a step-by-step analysis for Frozen Juice category, including data c
 
 *A detailed description of the functions we created by ourselves is listed in another document - Func_AggSales.md     
 
-Contributors: Kevin Li, Fu-Chi Shih, Xueqi Wang, Prof. Candance Yano
-
 
 
 ### Data Cleaning and Preparations
@@ -138,7 +136,7 @@ head(frj_ttl)
 ## Groups: upc [1]
 ## 
 ##          upc  week ttlsales prom_n store_n ttlmv  w_price
-##        (dbl) (int)    (dbl)  (dbl)   (int) (int)    (dbl)
+##        <dbl> <int>    <dbl>  <dbl>   <int> <int>    <dbl>
 ## 1 1110000139     1  2458.80      0      70  1506 1.632669
 ## 2 1110000139     2  7805.20      0      69  4698 1.661388
 ## 3 1110000139     3 24744.78     71      71 19182 1.290000
@@ -159,7 +157,7 @@ tempfrj<-sub_sku(frj_ttl,frj_agg,i)
 ggplot(tempfrj,aes(x=week,y=ttlsales)) + geom_line() + geom_point()
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 There seems to be an outlier around week 140. Later, we would examine what happened in this week, but at this moment, we will remove this extreme value so that we can have a closer look of the pattern across all 400 weeks. 
 
@@ -169,7 +167,7 @@ tempfrj<-subset(tempfrj, ttlsales<200000)
 ggplot(tempfrj,aes(x=week,y=ttlsales)) + geom_line() + geom_point()
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 After moving the outlier, we have a clearer time series plot. The sales fluctuated a lot. We want to find the factors causing this fluctuation.
       
@@ -179,7 +177,7 @@ Next, we plot a scatter plot to examine the relationship between ``w_pric`` and 
 ggplot(tempfrj, aes(x=w_price, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. price")
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 Overall , price and sales is negatively correlated. But, the relationship doesn't seem to be quite linear. Therefore, we try two models: 1) simple linear regression and 2) adding polynomial term to price.
 
@@ -359,7 +357,7 @@ Before diving into a more complex model, we made a few scatter plots of variaous
 multi_tsplot(tempfrj)
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 **2) time series plot of price and reference price**
 
@@ -367,7 +365,7 @@ multi_tsplot(tempfrj)
 Rprice_plot(tempfrj)
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 **3) scatter plot of price & reference price difference and sales**
 
@@ -375,7 +373,7 @@ Rprice_plot(tempfrj)
 ggplot(tempfrj, aes(x=price_ref_diff, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. price_ref_diff")
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 **4) scatter plot of ref/current price ratio and sales**
 
@@ -383,7 +381,7 @@ ggplot(tempfrj, aes(x=price_ref_diff, y=ttlsales)) + geom_point() + ggtitle("Sca
 ggplot(tempfrj, aes(x=ref_wp.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. ref_price/current")
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 **5) scatter plot of current/regular price ratio and sales**
 
@@ -391,7 +389,7 @@ ggplot(tempfrj, aes(x=ref_wp.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatt
 ggplot(tempfrj, aes(x=wp_reg.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. current/regular price")
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 **6) scatter plot of time since last promotion and sales**
 
@@ -399,7 +397,7 @@ ggplot(tempfrj, aes(x=wp_reg.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatt
 ggplot(tempfrj, aes(x=prom.last_prom, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. promotion_indictator")
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 From scatter plots, we see that a few variables have strong correlation with sales response. However, before include new variables into our linear model, we need to make sure the predictors we include don't have strong correlations with each other.
 
@@ -408,7 +406,7 @@ cols<-c("ttlsales","price_ref_diff", "promfreq","w_price","reference_p", "wp_reg
 pairs.panels(tempfrj[cols])
 ```
 
-![](Modeling_AggSales_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](Modelling_AggSales_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 The following paired variables have strong correlations with each other. We need to be careful not to use them in the same model.    
 1) ``w_price`` and ``promfreq``, 2) ``w_price`` and ``reference_p``, 3)  ``wp_reg.ratio`` and ``ref_wp.ratio``, 4) ``w_price`` and ``wp_reg.ratio``, 5) ``w_price`` and ``ref_wp.ratio``
