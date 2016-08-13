@@ -1,7 +1,7 @@
 # Retail Scanner Data Prediction - A list of user-defined functions
 Fu-Chi Shih  
 Summary:    
-This is a support document for the main analysis described in Modeling_AggSales.md. Here describes all functions that we created to help us clean data, aggregate sales data, and build models. 
+This is a support document for the main analysis described in Modeling_AggSales.md. Here describes all functions that we created to clean data, aggregate sales data, and build models. 
 
 ### Load Required Libraries
 
@@ -13,9 +13,9 @@ library(psych) ; library(DAAG) ;library(reshape2)
 ### Define Data Cleaning and Data Aggregation Functions
 
 #### 1. Load UPC information 
-Read upc dataset, delete upc that has missing value, and combine product description and size as a new column ``des``.         
+Read upc dataset, delete upc that has missing value, and combine product description (``DESCRIP``) and size (``SIZE``) as a new column ``des``.         
 **- Parameter :**        
-``path``: the file path of upc dataset     
+``path``: the file path for upc dataset     
 **- Return :**     
 A cleaned data frame of all upc information 
 
@@ -31,8 +31,8 @@ readupc<-function(path){
 ```
 
 #### 2. Clean sales data
-Delete suspect data* and entries that have no sales (price, move, or qty equal 0)    
-*(suspect data means ok=0. The feature OK is a flag set by Dominick's to indicate that the data for that week are suspects.)     
+Delete suspect data* and entries that have no sales (``price``, ``move``, or ``qty`` equal 0)    
+*(suspect data means ``ok``=0. The feature ``ok`` is a flag set by Dominick's to indicate that the data for that week are suspects.)     
 **- Parameter :**      
 ``rawdata``: a data frame containing weekly sales data of a specific category     
 **- Return :**      
@@ -48,7 +48,7 @@ clean<-function(rawdata){
 
 #### 3. Merge sales table and upc table into one data frame
 **- Parameter :**        
-``data``: a cleaned data frame of weekly sales data of a specific category    
+``data``: a cleaned data frame of weekly sales of a specific category    
 ``upc``: a cleaned data frame of all upc information    
 **- Return :**       
 a full data frame of weekly sales data and upc information 
@@ -61,7 +61,7 @@ merge_tables<-function(data, upc){
 ```
 
 #### 4. Calculate new variables
-Compute sales, price per unit, and encode a promotion indictator)    
+Compute sales, price per unit, and encode a promotion indictator         
 **- Parameter :**        
 ``data``: a full data frame of weekly sales data and upc information    
 **- Return :**       
@@ -87,7 +87,7 @@ Combine function merge_tables and mutate_data into one data processing function
 ``data``: a cleaned data frame of weekly sales data of a specific category    
 ``upc``: a cleaned data frame of all upc information    
 **- Return :**       
-a full data frame of weekly sales data, upc information, and other new variables (``unit_price``, ``sales``, and ``prom``) 
+a full data frame of weekly sales, upc information, and other new variables (``unit_price``, ``sales``, and ``prom``) 
 
 ```r
 process_data<-function(data, upc){
@@ -98,7 +98,7 @@ process_data<-function(data, upc){
 ```
 
 #### 6. Compute SKUs popularity
-Aggregate sales data by product upc to sort each sku by sales   
+Aggregate sales data by upc and sort each product by sales   
 **- Parameter :**        
 ``cleaned_df``: a full data frame of weekly sales data, upc information, and other new variables (``unit_price``, ``sales``, and ``prom``)     
 ``upc``: a cleaned data frame of all upc information  
@@ -118,7 +118,7 @@ agg<-function(cleaned_df, upc){
 ```
 
 #### 7. Compute promotion frequency for each SKU
-Compute how often the product was promoted. We use followinf formulation to calculate promotion frequency: Total times of promotions in all stores and all weeks / [(total number of stores) + (total weeks)]    
+Compute how often the product was promoted. We use following formulation to calculate promotion frequency: Total times of promotions in all stores and all weeks / [(total number of stores) + (total weeks)]    
 **- Parameter :**        
 ``cleaned_df``: a full data frame of weekly sales data, upc information, and other new variables (``unit_price``, ``sales``, and ``prom``)       
 ``agg``: a data frame that ranks each product's poplarity by its sales percentage  
@@ -137,7 +137,7 @@ prom_count<-function(cleaned_df, agg){
 ```
 
 #### 8. Compute store-weighted price for each SKU in each week
-Remember our sales data is store-level and collected weekly. In order to predict total sales from all stores, we need to have a price index for each week across all stores.We use the formulation to compute: (For each sku and each week) Summation of the price in each store*sales in each store / total sales in all stores.    
+Remember our sales data is on store-level and collected weekly. In order to predict total sales from all stores, we need to have a weighted price for all stores at each week. We use this formulation to compute the weighted pric of each sku at each week: Summation of the price in each store*sales in each store / total sales in all stores.    
 **- Parameter :**        
 ``cleaned_df``: a full data frame of weekly sales data, upc information, and other new variables (``unit_price``, ``sales``, and ``prom``)       
 **- Return :**       
@@ -163,13 +163,13 @@ sku_ttl<-function(cleaned_df){
 
 
 #### 9. Subet the sales data of the ith-popular product
-This function subset sales data of the i-th popular product from one category.   
+This function select the sales data of the i-th popular product.   
 **- Parameter :**        
 ``cleaned_df``: a full data frame of weekly sales data, upc information, and other new variables (``unit_price``, ``sales``, ``prom``, and ``w_price``)           
 ``agg``:a data frame that ranks each product's poplarity by its sales percentage  
-``i``: a scalar that indicates which top-i sku the user wants to look at    
+``i``: a scalar indicating the rank of the sku that user want to look at    
 **- Return :**       
-all weekly sales data of the top-i product
+all weekly sales data of the i-th popular product
 
 
 ```r
@@ -196,12 +196,12 @@ cv<-function(fit){
 ```
 
 #### 11. Averge promotion frequency 
-For each week, this functions computes average promotion frequency in the past 4 weeks.    
+For each week, this function computes average promotion frequency in the past 4 weeks.    
 **- Parameter :**        
-``temp``:  all weekly sales data of the top-i product         
+``temp``:  all weekly sales data of the i-th popular product         
 ``period``: a scalar indicating the length of period that the user wants to use  
 **- Return :**       
-all weekly sales data of the top-i product, with one new variable added: ``promfreq``  
+all weekly sales data of the i-th popular product, with one new variable added: ``promfreq``  
 
 
 ```r
@@ -222,7 +222,7 @@ For each week, this function computes the most common price in the past 12 weeks
 **- Parameter :**  
 ``cat``: a full data frame of weekly sales data, upc information, and other new variables   
 ``agg``:a data frame that ranks each product's poplarity by its sales percentage  
-``i``: a scalar that indicates which top-i sku the user wants to look at    
+``i``: a scalar indicating the rank of the sku that user want to look at     
 ``period``: a scalar indicating the length of period that the user wants to use    
 **- Return :**         
 a data frame of the regular price for each week
@@ -250,12 +250,12 @@ find_reg_price<-function(cat, agg, i, period=12){
 #### 13. Compute reference price per week
 We develope the following formula to compute reference price.   
 reference price of current week = reference price of the previous week * alpha + actual price of the previous week * (1 - alpha)      
-Note: Assuming that the first period of  price is also the reference price of the products.    
+Note: Assuming that the current price in the first week is also the reference price for the first week.     
 **- Parameter :**  
 ``alpha``: a scalar (used as weighting of actual price)   
-``tempdata``: all weekly sales data of the top-i product      
+``tempdata``: all weekly sales data of the product        
 **- Return :**         
-all weekly sales data of the top-i product, with new variables added: ``price_ref_diff``, ``ref+wp.ratio``,``wp_reg.ratio``  
+all weekly sales data of the product, with new variables added: ``price_ref_diff``, ``ref+wp.ratio``,``wp_reg.ratio``  
 
 
 ```r
@@ -279,14 +279,14 @@ reference_price<-function(tempdata, alpha){
 
 
 #### 14. Compute the average weeks since last promotion
-Note: Assuming that all stores were running promotion during the week before the fisrt week.  
+Note: Assuming that all stores were running promotion during the week before the first week.  
 **- Parameter :**  
 ``data``: a full data frame of weekly sales data, upc information, and other new variables   
 ``agg``:a data frame that ranks each product's poplarity by its sales percentage  
-``i``: a scalar that indicates which top-i sku the user wants to look at    
-``tempdata``: all weekly sales data of the top-i product    
+``i``: a scalar that indicates the i-th product that the user wants to look at    
+``tempdata``: all weekly sales data of the i-th popular product    
 **- Return :**         
-all weekly sales data of the top-i product, with new variables added: ``last_prom``
+all weekly sales data of the i-th popular product, with a new variable added: ``last_prom``
 
 
 ```r
@@ -319,9 +319,9 @@ last_prom<-function(data,agg,tempdata,i){
 #### 15. Compute the promotion factor
 If the current week has promotion (either price discount and other promotions), this variable (``prom.last_prom``) represents the average periods of time since last promotion. If the current week has no promotion, ``prom.last_prom`` is encoded as 0.   
 **- Parameter :**     
-``tempdata``: (all weekly sales data of the top-i product (must have variable ``last_prom``)   
+``tempdata``: all weekly sales data of the i-th popular product (must have variable ``last_prom`` in the ``tempdata`` data frame)   
 **- Return :**         
-all weekly sales data of the top-i product, with new variables added: ``prom.last_prom``   
+all weekly sales data of the i-th popular product, with a new variable added: ``prom.last_prom``   
 
 
 ```r
@@ -339,7 +339,7 @@ promotion_factor<-function(tempdata){
 **- Parameter :**     
 ``tempdata``: all weekly sales data of the top-i product and all new variables     
 **- Return :**         
-a multiple time series plot of ``ttlsales`` (total sales), ``w_price`` (weighted price), ``n_prom`` (number of store running promotion)     
+a multiple time series plot of ``ttlsales`` (total sales), ``w_price`` (weighted price), ``n_prom`` (number of stores running promotion)     
 
 ```r
 multi_tsplot<-function(tempdata){
@@ -356,9 +356,9 @@ multi_tsplot<-function(tempdata){
 
 #### 17. Plot price vs. reference price
 **- Parameter :**     
-``tempdata``: all weekly sales data of the top-i product and the new variable ``reference_p``     
+``tempdata``: all weekly sales data of the i-th popular product (including the new variable ``reference_p``)     
 **- Return :**         
-a time series plot of ``w_price`` (weighted price), ``reference_p`` (reference price)
+a time series plot of ``w_price`` (weighted price) and ``reference_p`` (reference price)
 
 
 ```r

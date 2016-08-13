@@ -122,7 +122,7 @@ $(document).ready(function () {
 
 
 <p>Summary:<br />
-This is a support document for the main analysis described in Modeling_AggSales.md. Here describes all functions that we created to help us clean data, aggregate sales data, and build models.</p>
+This is a support document for the main analysis described in Modeling_AggSales.md. Here describes all functions that we created to clean data, aggregate sales data, and build models.</p>
 <div id="load-required-libraries" class="section level3">
 <h3>Load Required Libraries</h3>
 <pre class="r"><code>library(ggplot2) ; library(dplyr) ; library(forecast)
@@ -132,9 +132,9 @@ library(psych) ; library(DAAG) ;library(reshape2)</code></pre>
 <h3>Define Data Cleaning and Data Aggregation Functions</h3>
 <div id="load-upc-information" class="section level4">
 <h4>1. Load UPC information</h4>
-<p>Read upc dataset, delete upc that has missing value, and combine product description and size as a new column <code>des</code>.<br />
+<p>Read upc dataset, delete upc that has missing value, and combine product description (<code>DESCRIP</code>) and size (<code>SIZE</code>) as a new column <code>des</code>.<br />
 <strong>- Parameter :</strong><br />
-<code>path</code>: the file path of upc dataset<br />
+<code>path</code>: the file path for upc dataset<br />
 <strong>- Return :</strong><br />
 A cleaned data frame of all upc information</p>
 <pre class="r"><code>readupc&lt;-function(path){
@@ -148,8 +148,8 @@ A cleaned data frame of all upc information</p>
 </div>
 <div id="clean-sales-data" class="section level4">
 <h4>2. Clean sales data</h4>
-<p>Delete suspect data* and entries that have no sales (price, move, or qty equal 0)<br />
-*(suspect data means ok=0. The feature OK is a flag set by Dominick’s to indicate that the data for that week are suspects.)<br />
+<p>Delete suspect data* and entries that have no sales (<code>price</code>, <code>move</code>, or <code>qty</code> equal 0)<br />
+*(suspect data means <code>ok</code>=0. The feature <code>ok</code> is a flag set by Dominick’s to indicate that the data for that week are suspects.)<br />
 <strong>- Parameter :</strong><br />
 <code>rawdata</code>: a data frame containing weekly sales data of a specific category<br />
 <strong>- Return :</strong><br />
@@ -162,7 +162,7 @@ a cleaned data frame of weekly sales data of a specific category</p>
 <div id="merge-sales-table-and-upc-table-into-one-data-frame" class="section level4">
 <h4>3. Merge sales table and upc table into one data frame</h4>
 <p><strong>- Parameter :</strong><br />
-<code>data</code>: a cleaned data frame of weekly sales data of a specific category<br />
+<code>data</code>: a cleaned data frame of weekly sales of a specific category<br />
 <code>upc</code>: a cleaned data frame of all upc information<br />
 <strong>- Return :</strong><br />
 a full data frame of weekly sales data and upc information</p>
@@ -173,7 +173,7 @@ a full data frame of weekly sales data and upc information</p>
 </div>
 <div id="calculate-new-variables" class="section level4">
 <h4>4. Calculate new variables</h4>
-<p>Compute sales, price per unit, and encode a promotion indictator)<br />
+<p>Compute sales, price per unit, and encode a promotion indictator<br />
 <strong>- Parameter :</strong><br />
 <code>data</code>: a full data frame of weekly sales data and upc information<br />
 <strong>- Return :</strong><br />
@@ -197,7 +197,7 @@ a full data frame of weekly sales data, upc information, and other new variables
 <code>data</code>: a cleaned data frame of weekly sales data of a specific category<br />
 <code>upc</code>: a cleaned data frame of all upc information<br />
 <strong>- Return :</strong><br />
-a full data frame of weekly sales data, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, and <code>prom</code>)</p>
+a full data frame of weekly sales, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, and <code>prom</code>)</p>
 <pre class="r"><code>process_data&lt;-function(data, upc){
     cleaned_df&lt;-merge_tables(data, upc)
     cleaned_df&lt;-mutate_data(cleaned_df)
@@ -206,7 +206,7 @@ a full data frame of weekly sales data, upc information, and other new variables
 </div>
 <div id="compute-skus-popularity" class="section level4">
 <h4>6. Compute SKUs popularity</h4>
-<p>Aggregate sales data by product upc to sort each sku by sales<br />
+<p>Aggregate sales data by upc and sort each product by sales<br />
 <strong>- Parameter :</strong><br />
 <code>cleaned_df</code>: a full data frame of weekly sales data, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, and <code>prom</code>)<br />
 <code>upc</code>: a cleaned data frame of all upc information<br />
@@ -224,7 +224,7 @@ a data frame that ranks each product’s poplarity by its sales percentage</p>
 </div>
 <div id="compute-promotion-frequency-for-each-sku" class="section level4">
 <h4>7. Compute promotion frequency for each SKU</h4>
-<p>Compute how often the product was promoted. We use followinf formulation to calculate promotion frequency: Total times of promotions in all stores and all weeks / [(total number of stores) + (total weeks)]<br />
+<p>Compute how often the product was promoted. We use following formulation to calculate promotion frequency: Total times of promotions in all stores and all weeks / [(total number of stores) + (total weeks)]<br />
 <strong>- Parameter :</strong><br />
 <code>cleaned_df</code>: a full data frame of weekly sales data, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, and <code>prom</code>)<br />
 <code>agg</code>: a data frame that ranks each product’s poplarity by its sales percentage<br />
@@ -241,7 +241,7 @@ a data frame that contains each product’s poplarity and its promotion frequenc
 </div>
 <div id="compute-store-weighted-price-for-each-sku-in-each-week" class="section level4">
 <h4>8. Compute store-weighted price for each SKU in each week</h4>
-<p>Remember our sales data is store-level and collected weekly. In order to predict total sales from all stores, we need to have a price index for each week across all stores.We use the formulation to compute: (For each sku and each week) Summation of the price in each store*sales in each store / total sales in all stores.<br />
+<p>Remember our sales data is on store-level and collected weekly. In order to predict total sales from all stores, we need to have a weighted price for all stores at each week. We use this formulation to compute the weighted pric of each sku at each week: Summation of the price in each store*sales in each store / total sales in all stores.<br />
 <strong>- Parameter :</strong><br />
 <code>cleaned_df</code>: a full data frame of weekly sales data, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, and <code>prom</code>)<br />
 <strong>- Return :</strong><br />
@@ -263,13 +263,13 @@ a full data frame of weekly sales data, upc information, and other new variables
 </div>
 <div id="subet-the-sales-data-of-the-ith-popular-product" class="section level4">
 <h4>9. Subet the sales data of the ith-popular product</h4>
-<p>This function subset sales data of the i-th popular product from one category.<br />
+<p>This function select the sales data of the i-th popular product.<br />
 <strong>- Parameter :</strong><br />
 <code>cleaned_df</code>: a full data frame of weekly sales data, upc information, and other new variables (<code>unit_price</code>, <code>sales</code>, <code>prom</code>, and <code>w_price</code>)<br />
 <code>agg</code>:a data frame that ranks each product’s poplarity by its sales percentage<br />
-<code>i</code>: a scalar that indicates which top-i sku the user wants to look at<br />
+<code>i</code>: a scalar indicating the rank of the sku that user want to look at<br />
 <strong>- Return :</strong><br />
-all weekly sales data of the top-i product</p>
+all weekly sales data of the i-th popular product</p>
 <pre class="r"><code>sub_sku&lt;-function(cleaned_df, agg, i){
     i&lt;-as.numeric(i)
     temp&lt;-cleaned_df %&gt;% filter(upc %in% agg$upc[i])
@@ -291,12 +291,12 @@ R-squared value from 10-folds cross-validation</p>
 </div>
 <div id="averge-promotion-frequency" class="section level4">
 <h4>11. Averge promotion frequency</h4>
-<p>For each week, this functions computes average promotion frequency in the past 4 weeks.<br />
+<p>For each week, this function computes average promotion frequency in the past 4 weeks.<br />
 <strong>- Parameter :</strong><br />
-<code>temp</code>: all weekly sales data of the top-i product<br />
+<code>temp</code>: all weekly sales data of the i-th popular product<br />
 <code>period</code>: a scalar indicating the length of period that the user wants to use<br />
 <strong>- Return :</strong><br />
-all weekly sales data of the top-i product, with one new variable added: <code>promfreq</code></p>
+all weekly sales data of the i-th popular product, with one new variable added: <code>promfreq</code></p>
 <pre class="r"><code>prom_freq&lt;-function(period=4, temp){
   ttl_prom_n&lt;-rollapply(temp$prom_n, period, sum) # sum total times of promotions ran for every passing period
   max_store_n&lt;-rollapply(temp$store_n, period, max) # return the maximum number of stores runing promotion for each passing period
@@ -313,7 +313,7 @@ all weekly sales data of the top-i product, with one new variable added: <code>p
 <strong>- Parameter :</strong><br />
 <code>cat</code>: a full data frame of weekly sales data, upc information, and other new variables<br />
 <code>agg</code>:a data frame that ranks each product’s poplarity by its sales percentage<br />
-<code>i</code>: a scalar that indicates which top-i sku the user wants to look at<br />
+<code>i</code>: a scalar indicating the rank of the sku that user want to look at<br />
 <code>period</code>: a scalar indicating the length of period that the user wants to use<br />
 <strong>- Return :</strong><br />
 a data frame of the regular price for each week</p>
@@ -337,12 +337,12 @@ a data frame of the regular price for each week</p>
 <h4>13. Compute reference price per week</h4>
 <p>We develope the following formula to compute reference price.<br />
 reference price of current week = reference price of the previous week * alpha + actual price of the previous week * (1 - alpha)<br />
-Note: Assuming that the first period of price is also the reference price of the products.<br />
+Note: Assuming that the current price in the first week is also the reference price for the first week.<br />
 <strong>- Parameter :</strong><br />
 <code>alpha</code>: a scalar (used as weighting of actual price)<br />
-<code>tempdata</code>: all weekly sales data of the top-i product<br />
+<code>tempdata</code>: all weekly sales data of the product<br />
 <strong>- Return :</strong><br />
-all weekly sales data of the top-i product, with new variables added: <code>price_ref_diff</code>, <code>ref+wp.ratio</code>,<code>wp_reg.ratio</code></p>
+all weekly sales data of the product, with new variables added: <code>price_ref_diff</code>, <code>ref+wp.ratio</code>,<code>wp_reg.ratio</code></p>
 <pre class="r"><code>reference_price&lt;-function(tempdata, alpha){
     tot_period = dim(tempdata)[1]
     X = data.frame(tempdata[,&quot;w_price&quot;])   # format as df
@@ -362,14 +362,14 @@ all weekly sales data of the top-i product, with new variables added: <code>pric
 </div>
 <div id="compute-the-average-weeks-since-last-promotion" class="section level4">
 <h4>14. Compute the average weeks since last promotion</h4>
-<p>Note: Assuming that all stores were running promotion during the week before the fisrt week.<br />
+<p>Note: Assuming that all stores were running promotion during the week before the first week.<br />
 <strong>- Parameter :</strong><br />
 <code>data</code>: a full data frame of weekly sales data, upc information, and other new variables<br />
 <code>agg</code>:a data frame that ranks each product’s poplarity by its sales percentage<br />
-<code>i</code>: a scalar that indicates which top-i sku the user wants to look at<br />
-<code>tempdata</code>: all weekly sales data of the top-i product<br />
+<code>i</code>: a scalar that indicates the i-th product that the user wants to look at<br />
+<code>tempdata</code>: all weekly sales data of the i-th popular product<br />
 <strong>- Return :</strong><br />
-all weekly sales data of the top-i product, with new variables added: <code>last_prom</code></p>
+all weekly sales data of the i-th popular product, with a new variable added: <code>last_prom</code></p>
 <pre class="r"><code>last_prom&lt;-function(data,agg,tempdata,i){
   sub&lt;-sub_sku(data, agg, i) #subset raw data of the i-th sku
   matrix&lt;-tapply(sub$prom, list(sub$week, sub$store), mean)
@@ -399,9 +399,9 @@ all weekly sales data of the top-i product, with new variables added: <code>last
 <h4>15. Compute the promotion factor</h4>
 <p>If the current week has promotion (either price discount and other promotions), this variable (<code>prom.last_prom</code>) represents the average periods of time since last promotion. If the current week has no promotion, <code>prom.last_prom</code> is encoded as 0.<br />
 <strong>- Parameter :</strong><br />
-<code>tempdata</code>: (all weekly sales data of the top-i product (must have variable <code>last_prom</code>)<br />
+<code>tempdata</code>: all weekly sales data of the i-th popular product (must have variable <code>last_prom</code> in the <code>tempdata</code> data frame)<br />
 <strong>- Return :</strong><br />
-all weekly sales data of the top-i product, with new variables added: <code>prom.last_prom</code></p>
+all weekly sales data of the i-th popular product, with a new variable added: <code>prom.last_prom</code></p>
 <pre class="r"><code>promotion_factor&lt;-function(tempdata){
   tempdata[tempdata$prom_n &gt; 0, &quot;prom&quot;] &lt;- 1
   tempdata[tempdata$prom_n == 0, &quot;prom&quot;] &lt;- 0
@@ -416,7 +416,7 @@ all weekly sales data of the top-i product, with new variables added: <code>prom
 <p><strong>- Parameter :</strong><br />
 <code>tempdata</code>: all weekly sales data of the top-i product and all new variables<br />
 <strong>- Return :</strong><br />
-a multiple time series plot of <code>ttlsales</code> (total sales), <code>w_price</code> (weighted price), <code>n_prom</code> (number of store running promotion)</p>
+a multiple time series plot of <code>ttlsales</code> (total sales), <code>w_price</code> (weighted price), <code>n_prom</code> (number of stores running promotion)</p>
 <pre class="r"><code>multi_tsplot&lt;-function(tempdata){
     sub&lt;-tempdata[,c(&quot;week&quot;,&quot;ttlsales&quot;,&quot;prom_n&quot;,&quot;w_price&quot;)]
     sub_melt&lt;-melt(sub, id.vars = &quot;week&quot;)
@@ -431,9 +431,9 @@ a multiple time series plot of <code>ttlsales</code> (total sales), <code>w_pric
 <div id="plot-price-vs.reference-price" class="section level4">
 <h4>17. Plot price vs. reference price</h4>
 <p><strong>- Parameter :</strong><br />
-<code>tempdata</code>: all weekly sales data of the top-i product and the new variable <code>reference_p</code><br />
+<code>tempdata</code>: all weekly sales data of the i-th popular product (including the new variable <code>reference_p</code>)<br />
 <strong>- Return :</strong><br />
-a time series plot of <code>w_price</code> (weighted price), <code>reference_p</code> (reference price)</p>
+a time series plot of <code>w_price</code> (weighted price) and <code>reference_p</code> (reference price)</p>
 <pre class="r"><code>Rprice_plot&lt;-function(tempdata){
     time_period = 1:nrow(tempdata)
     plot(time_period, tempdata$w_price, type = &quot;o&quot;, col = &quot;red&quot;)

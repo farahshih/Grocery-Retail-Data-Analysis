@@ -1,19 +1,20 @@
-# Retail Scanner Data Prediction - Example Category: Frozen Juice
+# Retail Scanner Data Prediction - Frozen Juice
 Fu-Chi Shih  
 Summary:      
-This document demonstrates some data analysis work we conducted on the Dominick's Database provided by James M. Kilts Center, University of Chicago Booth School of Business (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks).    
-
-The Dominick's database covers store-level scanner data collected at Dominick's Finer Foods over a period of more than seven years. Our goal is to build a model that can describe the relationship between the price, promotion, and sales of a sub-category or a product.     
+This repositoy demonstrates some data analysis work we conducted on the Dominick's scanner data.The database covers store-level scanner data collected at Dominick's Finer Foods over a period of more than seven years (1989-1997). Our goal is to build a model that can describe the relationship between price, promotion, and sales of different products.      
 
 Following is a step-by-step analysis for Frozen Juice category, including data cleaning, data aggregation, features prepartion, modelling, and model evaluations.   
 
-*A detailed description of the functions we created by ourselves is listed in another document - Func_AggSales.md     
+*A detailed description of the functions we created by ourselves is listed in another document - Func_AggSales.md  
+
+Acknowledgement: Thanks are given to James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available. (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
+
 
 
 
 ### Data Cleaning and Preparations
 
-Load relevant package and functions we defined by ourselves into the environment. 
+Load relevant packages and functionsinto the environment. 
 
 ```r
 library(knitr)
@@ -22,7 +23,7 @@ source('./Func_AggSales.R')
 ```
 
 #### **1. Read and transform UPC(Universal Product Code) file**
-The original upc file contains other information. We use our function ``readupc()`` to clean the upc file. After cleaning, we see that there are 175 products in frozen juice category.
+The original upc file has some missing values. We use our function ``readupc()`` to load and clean the upc file. After cleaning, we see that there are 175 products in frozen juice category.
 
 ```r
 p<-"~/Documents/Codes/Pricing_Project/Data/csv-data/frozenjuice/upcfrj.csv"
@@ -49,7 +50,7 @@ nrow(frj_upc)
 ```
   
 #### **2. Load the raw sales data**
-Here is a glimpse of how raw data looks like:
+Here is a glimpse of how the original sales data looks like:
 
 ```r
 frj<-read.csv("~/Documents/Codes/Pricing_Project/Data/csv-data/frozenjuice/wfrj.csv") 
@@ -124,7 +125,7 @@ sum(frj_agg$pct[c(1:15)])
 ```
 
 #### **5. Compute store-weighted price for each product**
-Back to our sales data. Remember, the original sales data is store-level and collected weekly. Here we use function ``sku_ttl()`` to compute store-weighted price for each product in each week. This new variable ``w_price`` can help us predict total sales of each product from all stores.
+Back to our sales data. Remember, the original sales data is store-level and collected weekly. Here, we use the function ``sku_ttl()`` to compute store-weighted price for each product in each week. This new variable ``w_price`` can help us predict total sales of each product in all stores.
 
 ```r
 frj_ttl<-sku_ttl(frj)
@@ -148,7 +149,7 @@ head(frj_ttl)
 ### Building Models 
 
 #### **1. Build the first model**
-We want to find factors that can best predict sales. Here, we pick up the 2nd most popular product - TROP SB ORANGE JUICE to build our first model. Below is a time series plot.
+We want to find factors that can best predict sales. To begin with, we pick up the 2nd most popular product - TROP SB ORANGE JUICE to build our first model. Below is a time series plot of its sales.
 
 
 ```r
@@ -159,7 +160,7 @@ ggplot(tempfrj,aes(x=week,y=ttlsales)) + geom_line() + geom_point()
 
 ![](Modelling_AggSales_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
-There seems to be an outlier around week 140. Later, we would examine what happened in this week, but at this moment, we will remove this extreme value so that we can have a closer look of the pattern across all 400 weeks. 
+There seems to be an outlier around week 140. Later, we will examine what happened in this week, but at this moment, we will remove this extreme value so that we can have a closer look of the pattern across all 400 weeks. 
 
 
 ```r
@@ -179,7 +180,7 @@ ggplot(tempfrj, aes(x=w_price, y=ttlsales)) + geom_point() + ggtitle("Scatter pl
 
 ![](Modelling_AggSales_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
-Overall , price and sales is negatively correlated. But, the relationship doesn't seem to be quite linear. Therefore, we try two models: 1) simple linear regression and 2) adding polynomial term to price.
+Overall , price and sales is negatively correlated. But, the relationship doesn't seem to be quite linear. Therefore, we try two models: 1) simple linear regression and 2) adding polynomial term to the price.
 
 **1) Simple Linear Regression Model**
 
@@ -223,7 +224,7 @@ print(cv_result)
 ```
 ## [1] 0.169
 ```
-The R-squared 0.169 was pretty small, which means the model could only explain about 17% variance of the data.
+The R-squared 0.169 was pretty small, which means that the model could only explain 17% variance of the data.
 
 **2) Polynomial Regression Model**
 
@@ -268,7 +269,7 @@ print(cv_result)
 ## [1] 0.413
 ```
 
-The R-squared value of 0.413 is much higher than previous one. It shows that the polynomial regression model performes much better than simple linear regression model. 
+The R-squared value of 0.413 is much higher than 0.17. It shows that the polynomial regression model performes much better than simple linear regression model. 
 
 #### **2. Include other predictors to the model**
 In previous analysis, we see that using solely price as the predictor only captures 41% variance of the data. We believe there were other factors affecting the sales trend and thus compute the following new predictors:    
@@ -412,7 +413,7 @@ The following paired variables have strong correlations with each other. We need
 1) ``w_price`` and ``promfreq``, 2) ``w_price`` and ``reference_p``, 3)  ``wp_reg.ratio`` and ``ref_wp.ratio``, 4) ``w_price`` and ``wp_reg.ratio``, 5) ``w_price`` and ``ref_wp.ratio``
 
 #### **4. Add new predictors and evaluate different models**
-Now, we fit different models to our data, and use 10-fold cross validation to compute each model's r-squared value.    
+Next, we will fit different models to our data, and use 10-fold cross validation to compute each model's r-squared value.    
 To begin with, we created an empty table so that we can compare different models more easily.
 
 ```r
@@ -556,6 +557,6 @@ summary(fit_31)
 ## Multiple R-squared:  0.583,	Adjusted R-squared:  0.579 
 ## F-statistic:  176 on 3 and 379 DF,  p-value: <0.0000000000000002
 ```
-The coefficient and siginificant test shows that, **as the ratio of reference price/current weighted price (``ref_wp.ratio``) goes up, the sales goes up too.** This actually tells us how customers perceive pricing. There is often a reference price in customer's mind (that is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price). The model_31 tells us that the ratio of reference price / current price (just like discount porpotion) tends to drive customers' buying behavior.    
+The coefficient and siginificant test show that, **as the ratio of reference price/current weighted price (``ref_wp.ratio``) goes up, the sales goes up too.** This actually tells us how customers perceive prices. There is often a reference price in customer's mind (that is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price). The model_31 tells us that the ratio of reference price / current price (just like discount porpotion) tends to drive customers' buying behavior.    
 
 It's interesting to note that in model_21, where we use ``price_ref_diff`` as one of the predictors, the model isn't as good as model_31. It implies that when evaluating price and making purchaing decisions, customers tend to compute the ratio of reference price and current price, instead of the actual price difference. 
