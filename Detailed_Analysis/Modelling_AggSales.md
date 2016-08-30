@@ -1,11 +1,8 @@
 # Retail Scanner Data Prediction - Frozen Juice
 Fu-Chi Shih  
-Summary:      
-This repositoy demonstrates some data analysis work we conducted on the Dominick's scanner data.The database covers store-level scanner data collected at Dominick's Finer Foods over a period of more than seven years (1989-1997). Our goal is to build a model that can describe the relationship between price, promotion, and sales of different products.      
-
 Following is a step-by-step analysis for Frozen Juice category, including data cleaning, data aggregation, features prepartion, modelling, and model evaluations.   
 
-*A detailed description of the functions we created by ourselves is listed in another document - Func_AggSales.md  
+*A detailed description of the functions we designed on our own is listed in another document - Func_AggSales.md  
 
 Acknowledgement: Thanks are given to James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available. (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
 
@@ -14,7 +11,7 @@ Acknowledgement: Thanks are given to James M. Kilts Center of Marketing at the G
 
 ### Data Cleaning and Preparations
 
-Load relevant packages and functionsinto the environment. 
+Load relevant packages and functions into the environment. 
 
 ```r
 library(knitr)

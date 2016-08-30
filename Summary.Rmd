@@ -1,0 +1,282 @@
+---
+title: "Summary"
+author: "Fu-Chi Shih"
+output: 
+  html_document: 
+    keep_md: yes
+---
+This repositoy demonstrates some data analysis work we conducted on the **Dominick's scanner data**.The database covers store-level scanner data collected at Dominick's Finer Foods over a period of more than seven years (1989-1997). Our goal is to build a model that can describe the relationship between price, promotion, and sales of different products.   
+
+Here is a summary of graphs and models we built to predict sales of frozen juice. A more detailed step-by-step analysis is documented in the file Modelling_AggSales.md. All functions we designed on our own is listed in the file Func_AggSales.md. 
+
+**Acknowledgement**: Thanks are given to James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available. (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
+
+```{r display setting, echo=FALSE}
+options(scipen = 999)
+```
+
+```{r source, message=FALSE, echo=FALSE, results='hide'}
+library(knitr)
+knit('./Detailed_Analysis/Func_AggSales.Rmd', tangle=TRUE)
+source('./Detailed_Analysis/Func_AggSales.R')
+```
+
+```{r readupc, cache=TRUE, echo=FALSE, results='hide'}
+p<-"~/Documents/Codes/Pricing_Project/Data/csv-data/frozenjuice/upcfrj.csv"
+frj_upc<-readupc(p)
+```
+  
+```{r read sales data,cache=TRUE, echo=FALSE}
+frj<-read.csv("~/Documents/Codes/Pricing_Project/Data/csv-data/frozenjuice/wfrj.csv")
+```
+
+```{r clean and process data, cache=TRUE, echo=FALSE}
+frj<-clean(frj)  
+frj<-process_data(frj,frj_upc)
+```
+
+```{r product popularity, cache=TRUE, echo=FALSE}
+frj_agg<-agg(frj,frj_upc) 
+frj_agg<-prom_count(frj,frj_agg)
+```
+
+```{r 50%sales, echo=FALSE, results='hide'}
+sum(frj_agg$pct[c(1:15)])
+```
+
+```{r compute w_price, cache=TRUE, echo=FALSE}
+frj_ttl<-sku_ttl(frj)
+```
+
+### Using weighted price to predict sales 
+We want to find factors that can best predict sales. As an example, we select data of the 2nd popular product - Tropicana Orange Juice,12OZ for later analysis. Below is a time series plot of its sales.
+
+```{r, cache=TRUE}
+i=2
+tempfrj<-sub_sku(frj_ttl,frj_agg,i)
+tempfrj<-subset(tempfrj, ttlsales<200000) # delete outlier
+ggplot(tempfrj,aes(x=week,y=ttlsales)) + geom_line() + geom_point() + ggtitle("Weekly sales of Tropicana Orange Juice")
+```
+
+The sales fluctuated a lot.    
+Next, we plot a scatter plot to examine the relationship between ``w_pric`` (store-weighted price) and ``sales``. 
+```{r}
+ggplot(tempfrj, aes(x=w_price, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. price")
+```
+
+Overall , price and sales is negatively correlated. But, the relationship doesn't seem to be quite linear. Therefore, we try two models: 1) simple linear regression and 2) adding polynomial term to the price.
+
+##### 1) Simple Linear Regression Model
+```{r}
+fit<-lm(ttlsales ~ w_price, data = tempfrj)
+summary(fit)
+```
+
+We use our function ``cv()`` to apply 10-folds cross validation to the data and then compute the R-squared value for all folds. 
+```{r, results="hide"}
+cv_result<-cv(fit)
+```
+
+```{r}
+print(cv_result)
+```
+The R-squared 0.169 was pretty small, which means that the model could only explain 17% variance of the data.
+
+##### 2) Polynomial Regression Model
+```{r}
+fit<-lm(ttlsales ~ w_price + I(w_price^2), data = tempfrj)
+summary(fit)
+```
+
+```{r, results="hide"}
+cv_result<-cv(fit)
+```
+
+```{r}
+print(cv_result)
+```
+
+The R-squared value of 0.413 is much higher than 0.17. It shows that the polynomial regression model performes much better than simple linear regression model. 
+
+### Include other predictors into the model 
+
+#### 1. Compute new predictors
+In previous analysis, we see that using weighted-price as predictor only captures 41% variance of the data. We believe there were other factors affecting the sales trend and thus compute the following new predictors:    
+1) ``promfreq``: promotion frequency for the past 4 weeks   
+2) ``reg_price``: the most common price for the past 12 weeks   
+3) ``reference_p``: reference price of current week = reference price of the previous week * alpha + actual price of the previous week * (1 - alpha)    
+alpha is a numeric number between 0 ~ 1.   
+4) ``price_ref_diff``: the difference between weighted price and difference price (``w_price`` - ``reference_p``)   
+5) ``ref_wp.ratio``: ``reference_p`` / ``w_price``   
+6) ``wp_reg.ratio``: ``w_price`` / ``reg_price``    
+7) ``prom.last_prom``: A compounded promotion factor. If the current week has promotion, this variable represents the average period of time since last promotion. If the current week has no promotion, the variable is encoded as 0.   
+
+```{r prom_freq, cache=TRUE, echo=FALSE}
+tempfrj<-prom_freq(period=4, tempfrj)  # compute average promotion frequency
+tempfrj<-subset(tempfrj, ttlsales<200000) # exclude outlier
+```
+
+```{r regular_price, cache=TRUE, echo=FALSE}
+regfrj<-find_reg_price(frj, frj_agg, i, period=12) # find regular price 
+tempfrj<-merge(tempfrj, regfrj, by="week") # combine all predictors
+```
+
+```{r reference_price, cache=TRUE, echo=FALSE}
+tempfrj<-reference_price(tempfrj, alpha = 0.6) 
+# compute reference price, reference price/weighted price, and weighted price/regular price
+```
+
+```{r promotion_factor, cache=TRUE, echo=FALSE}
+tempfrj<-last_prom(frj, frj_agg,tempfrj, i)  # compute the average period of time since last promotion 
+tempfrj<-promotion_factor(tempfrj) # compute the compounded promotion factor
+```
+
+Example of all variables for first few weeks.
+```{r all_variables, echo=FALSE}
+cols<-c("week","upc","ttlsales","prom_n","w_price","promfreq","reg_price","reference_p","price_ref_diff","ref_wp.ratio","wp_reg.ratio","prom.last_prom")
+tempfrj[15:20,cols]
+```
+
+#### 2. Explore correlations between new variables
+Before diving into a more complex model, we made a few scatter plots of variaous variables and sales to examine their hidden relationships.
+
+**1) multiple time series plot of ``ttlsales`` (total sales), ``w_price`` (weighted price), ``n_prom`` (number of store running promotion)**  
+```{r, warning=FALSE}
+multi_tsplot(tempfrj)
+```
+
+**2) time series plot of price and reference price**
+```{r, warning=FALSE}
+Rprice_plot(tempfrj)
+```
+
+**3) scatter plot of price & reference price difference and sales**
+```{r, warning=FALSE}
+ggplot(tempfrj, aes(x=price_ref_diff, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. price_ref_diff")
+```
+
+**4) scatter plot of ref/current price ratio and sales**
+```{r, warning=FALSE}
+ggplot(tempfrj, aes(x=ref_wp.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. ref_price/current")
+```
+
+**5) scatter plot of current/regular price ratio and sales**
+```{r, warning=FALSE}
+ggplot(tempfrj, aes(x=wp_reg.ratio, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. current/regular price")
+```
+
+**6) scatter plot of time since last promotion and sales**
+```{r, warning=FALSE}
+ggplot(tempfrj, aes(x=prom.last_prom, y=ttlsales)) + geom_point() + ggtitle("Scatter plot of sales vs. promotion_indictator")
+```
+
+From scatter plots, we see that a few variables have strong correlation with sales response. However, before include new variables into our linear model, we need to make sure the predictors we include don't have strong correlations with each other.
+```{r}
+cols<-c("ttlsales","price_ref_diff", "promfreq","w_price","reference_p", "wp_reg.ratio","ref_wp.ratio","prom.last_prom")
+pairs.panels(tempfrj[cols])
+```
+
+The following paired variables have strong correlations with each other. We need to be careful not to use them in the same model.    
+1) ``w_price`` and ``promfreq``, 2) ``w_price`` and ``reference_p``, 3)  ``wp_reg.ratio`` and ``ref_wp.ratio``, 4) ``w_price`` and ``wp_reg.ratio``, 5) ``w_price`` and ``ref_wp.ratio``
+
+#### 3. Add new predictors and evaluate different models
+Next, we will fit different models to our data, and use 10-fold cross validation to compute each model's r-squared value.    
+```{r, echo=FALSE}
+df<-data.frame(
+  Models = c("Response", "Predictor1", "Predictor2","Predictor3", "cv_result-1", "cv_result-2"), 
+  Model_1 = c("Sales", "w_price", "prom.last_prom","/", "NA","NA"),
+  Model_2 = c("Sales", "price_ref_diff", "reference_p", "prom.last_prom", "NA","NA"),
+  Model_3 = c("Sales", "ref_wp.ratio", "reference_p", "prom.last_prom", "NA", "NA"),
+  Model_4 = c("Sales", "wp_reg.ratio", "reference_p", "prom.last_prom", "NA", "NA"),
+  stringsAsFactors = FALSE
+  )
+```
+
+**1) Model_1-1**        
+Response: ``ttlsales``    
+Predictors: ``w_price``, ``prom.last_prom``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_11<-lm(ttlsales ~ w_price + prom.last_prom, data=tempfrj)
+cv_result_11<-cv(fit_11)
+df[5,"Model_1"]<-round(cv_result_11, 3)
+```
+
+**2) Model_1-2**        
+Response: ``ttlsales``    
+Predictors: ``w_price``, ``w_price^2``, ``prom.last_prom``, ``prom.last_prom^2``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_12<-lm(ttlsales ~ w_price + I(w_price^2) + prom.last_prom + I(prom.last_prom^2), data=tempfrj)
+cv_result_12<-cv(fit_12)
+df[6,"Model_1"]<-round(cv_result_12, 3)
+```
+
+**3) Model_2-1**     
+Response: ``ttlsales``    
+Predictors: ``reference_p``, ``prom.last_prom``, ``price_ref_diff``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_21<-fit<-lm(ttlsales ~ reference_p + prom.last_prom + price_ref_diff, data=tempfrj)
+cv_result_21<-cv(fit_21)
+df[5,"Model_2"]<-round(cv_result_21, 3)
+```
+
+**4) Model_2-2**     
+Response: ``ttlsales``    
+Predictors: ``reference_p``, ``reference_p^2``, ``prom.last_prom``, ``prom.last_prom^2``,  ``price_ref_diff``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_22<-lm(ttlsales ~ reference_p + I(reference_p^2) + prom.last_prom + I(prom.last_prom^2) + price_ref_diff, data=tempfrj)
+cv_result_22<-cv(fit_22)
+df[6,"Model_2"]<-round(cv_result_22, 3)
+```
+
+**5) Model_3-1**     
+Response: ``ttlsales``    
+Predictors: ``ref_wp.ratio``, ``reference_p``, ``prom.last_prom``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_31<-fit<-lm(ttlsales ~ ref_wp.ratio + reference_p + prom.last_prom, data=tempfrj)
+cv_result_31<-cv(fit_31)
+df[5,"Model_3"]<-round(cv_result_31, 3)
+```
+
+**6) Model_3-2**     
+Response: ``ttlsales``    
+Predictors: ``ref_wp.ratio``, ``reference_p``, ``reference_p^2``, ``prom.last_prom``, ``prom.last_prom^2``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_32<-fit<-lm(ttlsales ~ ref_wp.ratio + reference_p + I(reference_p^2) + prom.last_prom + I(prom.last_prom^2), data=tempfrj)
+cv_result_32<-cv(fit_32)
+df[6,"Model_3"]<-round(cv_result_32, 3)
+```
+
+**7) Model_4-1**    
+Response: ``ttlsales``    
+Predictors: ``wp_reg.ratio``, ``reference_p``, ``prom.last_prom``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_41<-fit<-lm(ttlsales ~ wp_reg.ratio + reference_p + prom.last_prom, data=tempfrj)
+cv_result_41<-cv(fit_41)
+df[5,"Model_4"]<-round(cv_result_41, 3)
+```
+
+**8) Model_4-2**      
+Response: ``ttlsales``    
+Predictors: ``wp_reg.ratio``, ``reference_p``, ``reference_p^2``, ``prom.last_prom``, ``prom.last_prom^2``
+```{r, results="hide",cache=TRUE, echo=FALSE}
+fit_42<-fit<-lm(ttlsales ~ wp_reg.ratio + reference_p + I(reference_p^2) + prom.last_prom + I(prom.last_prom^2), data=tempfrj)
+cv_result_42<-cv(fit_42)
+df[6,"Model_4"]<-round(cv_result_42, 3)
+```
+
+**Below table shows r-squared values (using 10-fold cross validation) for all models**
+```{r, echo=FALSE}
+print(df)
+```
+``cv-result-1``: r-squared value from 10-fold cross validation ; no polynominal terms in the model    
+``cv-result-2``: r-squared value from 10-fold cross validation ; adding polynominal terms into the model (e.g. ``reference_p^2``)
+
+#### 4.Conclusions    
+Among all, model_3-1 explains the data best (though model_3-2 has slightly higher r-squared value, the principal of parsimony tells us that model_3-1 is preferable.)   
+```{r}
+summary(fit_31)
+```
+The coefficient and siginificant test show that, **as the ratio of reference price/current weighted price (``ref_wp.ratio``) goes up, the sales goes up too.** This actually tells us how customers perceive prices. There is often a reference price in customer's mind (that is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price). The model_3-1 tells us that the ratio of reference price / current price (just like discount porpotion) tends to drive customers' buying behavior.    
+
+It's interesting to note that in model_2-1, where we use ``price_ref_diff`` as one of the predictors, the model isn't as good as model_3-1. It implies that when evaluating price and making purchaing decisions, customers tend to compute the ratio of reference price and current price, instead of the actual price difference. 
+
