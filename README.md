@@ -6,5 +6,5 @@ The file Summary.md summarizes graphs and models we built to predict sales of fr
 
 Contributors: Kevin Li, Fu-Chi Shih, Xueqi Wang (Supervisor: Candance Yano, Professor, Department of Industrial Engineering & Operations Research, UC Berkeley)
 
-Acknowledgement: Thanks are given to James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available.
+Acknowledgement: Thanks James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available.(Data Source:https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
 
