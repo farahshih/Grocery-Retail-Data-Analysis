@@ -5,5 +5,4 @@ The Nielsen Datasets involves two datasets:
 2) Retail Scanner Data (weekly product data for 2.6 million UPCs and their sales data from over 35,000 grocery and drug stores in recent 10 years).      
 Data Description: https://research.chicagobooth.edu/nielsen
 
-Just like we did on the Dominick's Finer Foods datasets, our objective is to analyze consumer’s purchase choice and factors that have significant influence on it.    
-It is a private dataset and thus this folder only shows a few Python and R scripts (without any data) for reference.
+The analysis techniques we applied one the Nielsen Datasets are similar with the Dominick's Finer Foods datasets. However, since the Nielsen datasets is a private dataset, this folder only shows a few Python and R scripts (without any data) for reference.
