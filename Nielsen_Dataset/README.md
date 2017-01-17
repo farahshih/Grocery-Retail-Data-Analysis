@@ -6,4 +6,4 @@ The Nielsen Datasets involves two datasets:
 Data Description: https://research.chicagobooth.edu/nielsen
 
 Just like we did on the Dominick's Finer Foods datasets, our objective is to analyze consumer’s purchase choice and factors that have significant influence on it.    
-It is a private dataset and thus this folder only shows a few Python and R scripts (without any data) for references.
+It is a private dataset and thus this folder only shows a few Python and R scripts (without any data) for reference.
