@@ -1,4 +1,4 @@
-# Grocery-Retail-Data-Analysis
+# Grocery-Retail-Data-Analysis(Dominick's scanner data)
 
 This repositoy demonstrates some data analysis work we conducted on the Dominick's scanner data.The database covers store-level scanner data collected at Dominick's Finer Foods over a period of nine years (1989-1997). Our objective is to understand consumer’s purchase choice and factors that have significant influence on it. We want to build a model that can best describe the relationship between price, promotion, and sales of different products.      
 
