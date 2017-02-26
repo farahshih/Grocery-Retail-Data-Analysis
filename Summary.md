@@ -1,10 +1,12 @@
 # Summary
 Fu-Chi Shih  
-This repositoy demonstrates some data analysis work we conducted on the **Dominick's scanner data**.The database covers store-level scanner data collected at Dominick's Finer Foods over a period of more than seven years (1989-1997). Our goal is to build a model that can describe the relationship between price, promotion, and sales of different products.   
+This repositoy demonstrates some data analysis work I conducted on the **Dominick's scanner data**. The database covers store-level scanner data collected at Dominick's Finer Foods (now a part of Safeway) over a period of more than seven years (1989-1997). The objective of this research is to analyze consumer’s purchase choice and factors that have significant influence on it.   
 
-Here is a summary of graphs and models we built to predict sales of frozen juice. A more detailed step-by-step analysis is documented in the file Modelling_AggSales.md. All functions we designed on our own are listed in the file Func_AggSales.md. 
+I applied several models to predict the weekly sales of different products at each store. Among all models, including linear regression, logistic regression, and Bayesian structural time series (BSTS) model, linear regression model works the best. Following, I presented a summary of the regression models I applied to predict sales of frozen juice. A more detailed analysis is documented in the ``Modelling_AggSales.md`` file. All functions we designed on our own are listed in the ``Func_AggSales.md`` file.     
 
-**Acknowledgement**: Thanks are given to James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available. (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
+**One interesting finding is about how customers evaluated the shelf price as a function of reference price and current price**. (Reference price is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price.) I compared two features’ impacts on the sales: 1) the ratio of reference price/current price and 2) the difference between reference price and current price. The result showed that both features were significant in predicting the sales. However, the ratio feature was able to increase the r-squared value up to 10% more than the difference feature did. This finding gave us an implication about how customers evaluated the shelf price and made purchasing decisions. **Customers tended to use the proportion instead of difference to evaluate how much discounts they could get.** This finding would be helpful for marketers and store managers to organize more effective promotions.      
+
+**Acknowledgement**: Thanks James M. Kilts Center of Marketing at the Graduate School of Business, University of Chicago, for making the Dominick’s Finer Foods data available. (https://research.chicagobooth.edu/kilts/marketing-databases/dominicks)
 
 
 
@@ -327,7 +329,6 @@ summary(fit_31)
 ## Multiple R-squared:  0.583,	Adjusted R-squared:  0.579 
 ## F-statistic:  176 on 3 and 379 DF,  p-value: <0.0000000000000002
 ```
-The coefficient and siginificant test show that, **as the ratio of reference price/current weighted price (``ref_wp.ratio``) goes up, the sales goes up too.** This actually tells us how customers perceive prices. There is often a reference price in customer's mind (that is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price). The model_3-1 tells us that the ratio of reference price / current price (just like discount porpotion) tends to drive customers' buying behavior.    
+The coefficient and significant test shows that, **as the ratio of reference price/current weighted price (``ref_wp.ratio``) goes up, the sales goes up too.** This actually tells us how customers perceived the shelf price. There is often a reference price in customer's mind (that is how much consumers expect to pay for a good in relation to other competitors and the previously advertised price). The model_3-1 tells us that the ratio of reference price / current price (just like discount porpotion) tended to drive customers' buying behavior.    
 
-It's interesting to note that in model_2-1, where we use ``price_ref_diff`` as one of the predictors, the model isn't as good as model_3-1. It implies that when evaluating price and making purchaing decisions, customers tend to compute the ratio of reference price and current price, instead of the actual price difference. 
-
+It's interesting to note that in model_2-1, where we used ``price_ref_diff`` as one of the predictors, the r-squared  value was 10% lower than that of model_3-1. It implies that when evaluating price and making purchasing decisions, customers tended to use the proportion instead of difference to evaluate how much discounts they could get. This finding would be helpful for marketers and store managers to organize more effective promotions.      
